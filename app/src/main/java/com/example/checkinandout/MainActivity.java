@@ -5,19 +5,40 @@
  * 2021/11/07 : 신규생성
  * */
 
+/*
+* 데이터베이스 이름 : guentae
+*
+* 테이블 이름 : Employee
+* empNum VARCHAR(PK), name VARCHAR, phone VARCHAR
+*
+* 테이블 이름 : EmployeeInOut
+* empNum VARCHAR(PK), seq int(FK, 자동 증가), Intime varchar(20), Outtime varchar(20)
+* * */
+
 package com.example.checkinandout;
 
+import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,13 +56,24 @@ public class MainActivity extends AppCompatActivity {
     Button btn_moveToAdmin;
     int int_adminCode = 0; //0 = false, 1 = true
     int int_loginSuccess = 0; // 0 = false, 1 = true, 로그인 여부 검사
-    public String str_ip = "";//server IP입력
+    public String str_ip = "192.168.0.59";//server IP입력
     public String str_TAG = "phpquery"; //php 태그
+    private char state;
+    public String str_empName;
+    public String str_empNum;
+    public String str_phone;
+    public String str_inEmpNum;
+    public String str_inName;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if(int_loginSuccess == 0){
+            showLoginDialog();
+        }
 
         /*
          * 자동로그인 구현, SharedPreferences Interface 사용
@@ -72,7 +104,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public class getData extends AsyncTask<String, Void, String>{
+    public void showLoginDialog(){
+        LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        LinearLayout loginLayout = (LinearLayout) vi.inflate(R.layout.logindialog, null);
+
+        final EditText empNum = (EditText)loginLayout.findViewById(R.id.empNum);
+        final EditText empName = (EditText)loginLayout.findViewById(R.id.empName);
+        new AlertDialog.Builder(this).setTitle("Login").setView(loginLayout).setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //테스트코드
+                Toast.makeText(MainActivity.this, "사번 : "+empNum.getText().toString() + "이름 : "+empName.getText().toString(),Toast.LENGTH_SHORT).show();
+                str_inEmpNum = empNum.getText().toString();
+                str_inName = empName.getText().toString();
+                GetData task = new GetData();
+                // 로그인
+                task.execute(str_inEmpNum, str_inName);
+            }
+        }).show();
+    }
+
+
+
+
+    public class GetData extends AsyncTask<String, Void, String>{
 
         ProgressDialog progressDialog;
         String errorString = null;
@@ -88,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) { //AsyncTask의 모든 작업이 완료된 후 최종 1회 호출, 자동로그인을 위함
             super.onPostExecute(result);
+
             progressDialog.dismiss();
             Log.d(str_TAG, "respose : " + result);
             if(result == null){
@@ -95,23 +151,27 @@ public class MainActivity extends AppCompatActivity {
             else{
                 try{
                     JSONObject jsonObject = new JSONObject(result);
-                    String jaemin =jsonObject.getString("jaemin");
+                    //jsonObject =  {"jeamin":[{"empNum":"12592","name":"김재민","phone":"01087906281"}]}
+                    String jaemin =jsonObject.getString("jaemin"); //에러발생
                     JSONArray jsonArray = new JSONArray(jaemin);
+
                     for(int i = 0 ; i<jsonArray.length() ; i++){
                         JSONObject subObject = jsonArray.getJSONObject(i);
-                        /*
-                         * DB table의 열 이름과 속성값을 값,쌍 형태로 매칭
-                         * 속성 값이 담길 변수 = subObject.getString("열 이름");
-                         * */
-
-                        /*
-                         * Intent를 통해 값을 activity간 공유
-                         * */
+                        str_empNum = subObject.getString("empNum");
+                        str_empName = subObject.getString("name");
+                        str_phone = subObject.getString("phone");
+                    }
+                    /*
+                    * 자동로그인 구현 후 int_loginSuccess = 1 초기화
+                    * */
+                    if(str_empNum == str_inEmpNum && str_empName == str_inName){
+                        Toast.makeText(getApplicationContext(), "로그인 성공", Toast.LENGTH_SHORT).show();
+                        int_loginSuccess = 1;
                     }
 
                 }
                 catch (JSONException e){
-                    Toast.makeText(getApplicationContext(), "DB확인 메세지", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "정보 확인 요망", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
             }
@@ -122,8 +182,8 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(String... params) { //스레드에서 처리 될 내용 기술
             String str_search1 = params[0];
             String str_search2 = params[1];
-            String str_serverURL = "http://"+str_ip+"/query.php";
-            String str_postParameters = "userId=" + str_search1 + "&userPw" +str_search2;
+            String str_serverURL = "http://"+str_ip+"/loginCheck.php";
+            String str_postParameters = "empNum=" + str_search1 + "&name=" +str_search2;
 
 
             try {
@@ -182,5 +242,37 @@ public class MainActivity extends AppCompatActivity {
                 return null;
             }
         }
+
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == 1){ // 권한을 허용했을 경우
+            int length  = permissions.length;
+            for(int i = 0 ; i<length ; i++){
+                if(grantResults[i] == PackageManager.PERMISSION_GRANTED){
+                    //권한 허용
+                    Log.d("MainActivity", "권한허용 : " + permissions[i]);
+                }
+            }
+        }
+    }
+
+    private void checkSelfPermission() {
+        String temp = "";
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            temp = temp + Manifest.permission.ACCESS_FINE_LOCATION + " ";
+        }
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            temp = temp + Manifest.permission.ACCESS_COARSE_LOCATION + " ";
+        }
+        if(TextUtils.isEmpty(temp) == false){ // 권한 없을 시 요청
+            ActivityCompat.requestPermissions(this, temp.trim().split(" "), 1);
+        }
+        else
+            Toast.makeText(this, "권한 허용 완료", Toast.LENGTH_SHORT).show();
+    }
+
 }
