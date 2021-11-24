@@ -151,20 +151,27 @@ public class MainActivity extends AppCompatActivity {
             else{
                 try{
                     JSONObject jsonObject = new JSONObject(result);
-                    //jsonObject =  {"jeamin":[{"empNum":"12592","name":"김재민","phone":"01087906281"}]}
-                    String jaemin =jsonObject.getString("jaemin"); //에러발생
-                    JSONArray jsonArray = new JSONArray(jaemin);
+
+                    JSONArray jsonArray = jsonObject.getJSONArray("jaemin");
+
 
                     for(int i = 0 ; i<jsonArray.length() ; i++){
                         JSONObject subObject = jsonArray.getJSONObject(i);
                         str_empNum = subObject.getString("empNum");
                         str_empName = subObject.getString("name");
                         str_phone = subObject.getString("phone");
+
                     }
                     /*
                     * 자동로그인 구현 후 int_loginSuccess = 1 초기화
                     * */
+                    System.out.println("----------------------------------------------------");
+                    System.out.println(str_empNum);
+                    System.out.println(str_empName);
+                    System.out.println("----------------------------------------------------");
+
                     if(str_empNum == str_inEmpNum && str_empName == str_inName){
+
                         Toast.makeText(getApplicationContext(), "로그인 성공", Toast.LENGTH_SHORT).show();
                         int_loginSuccess = 1;
                     }
