@@ -155,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
                     JSONArray jsonArray = jsonObject.getJSONArray("jaemin");
 
 
+
                     for(int i = 0 ; i<jsonArray.length() ; i++){
                         JSONObject subObject = jsonArray.getJSONObject(i);
                         str_empNum = subObject.getString("empNum");
