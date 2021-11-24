@@ -153,6 +153,10 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject jsonObject = new JSONObject(result);
                     //jsonObject =  {"jeamin":[{"empNum":"12592","name":"김재민","phone":"01087906281"}]}
                     String jaemin =jsonObject.getString("jaemin"); //에러발생
+                    //수정코드
+                    //JSONObject jsonObject = new JSONObject(result);
+                    //JSONArray jsonArray = jsonObject.getJSONArray("jaemin");
+                    
                     JSONArray jsonArray = new JSONArray(jaemin);
 
                     for(int i = 0 ; i<jsonArray.length() ; i++){
