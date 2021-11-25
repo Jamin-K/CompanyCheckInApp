@@ -65,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
     public String str_inEmpNum;
     public String str_inName;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -171,10 +170,15 @@ public class MainActivity extends AppCompatActivity {
                     System.out.println(str_empName);
                     System.out.println("----------------------------------------------------");
 
-                    if(str_empNum == str_inEmpNum && str_empName == str_inName){
-
+                    if(str_empNum.equals(str_inEmpNum) && str_empName.equals(str_inName)){
                         Toast.makeText(getApplicationContext(), "로그인 성공", Toast.LENGTH_SHORT).show();
+                        System.out.println("로그인성공");
                         int_loginSuccess = 1;
+                    }
+                    else{
+                        Toast.makeText(getApplicationContext(), "로그인 실패", Toast.LENGTH_SHORT).show();
+                        System.out.println("로그인실패");
+                        int_loginSuccess = 0;
                     }
 
                 }
