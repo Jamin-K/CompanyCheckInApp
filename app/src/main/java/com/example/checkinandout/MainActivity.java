@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -64,20 +65,21 @@ public class MainActivity extends AppCompatActivity {
     public String str_phone;
     public String str_inEmpNum;
     public String str_inName;
+    public String str_userType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        /*
+        * 로그인 실패 시 다이어로그 창 무한으로 나오게 구현
+        * */
+
         if(int_loginSuccess == 0){
             showLoginDialog();
         }
 
-        /*
-         * 자동로그인 구현, SharedPreferences Interface 사용
-         * 로그인 실패 시 LoginActivity 이동
-         * */
 
 
         /*
@@ -119,8 +121,10 @@ public class MainActivity extends AppCompatActivity {
                 GetData task = new GetData();
                 // 로그인
                 task.execute(str_inEmpNum, str_inName);
+
             }
         }).show();
+
     }
 
 
@@ -160,11 +164,13 @@ public class MainActivity extends AppCompatActivity {
                         str_empNum = subObject.getString("empNum");
                         str_empName = subObject.getString("name");
                         str_phone = subObject.getString("phone");
+                        str_userType = subObject.getString("userType");
 
                     }
                     /*
                     * 자동로그인 구현 후 int_loginSuccess = 1 초기화
                     * */
+                    int_adminCode = Integer.parseInt(str_userType);
                     System.out.println("----------------------------------------------------");
                     System.out.println(str_empNum);
                     System.out.println(str_empName);
@@ -174,16 +180,25 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "로그인 성공", Toast.LENGTH_SHORT).show();
                         System.out.println("로그인성공");
                         int_loginSuccess = 1;
+
+                        /*
+                        * GPS 위치를 사용한 통신 구현
+                        * */
+                        //InsertData insertTask = new InsertData();
+                        //insertTask.execute(str_empNum, "2021-11-20 07:00:00", "2021-11-20 16:30:00");
                     }
                     else{
                         Toast.makeText(getApplicationContext(), "로그인 실패", Toast.LENGTH_SHORT).show();
-                        System.out.println("로그인실패");
                         int_loginSuccess = 0;
+                        showLoginDialog();
                     }
 
                 }
                 catch (JSONException e){
-                    Toast.makeText(getApplicationContext(), "정보 확인 요망", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(getApplicationContext(), "정보 확인 요망", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "로그인 실패", Toast.LENGTH_SHORT).show();
+                    int_loginSuccess = 0;
+                    showLoginDialog();
                     e.printStackTrace();
                 }
             }
