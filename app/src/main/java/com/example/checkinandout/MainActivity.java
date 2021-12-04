@@ -1,19 +1,21 @@
-/*
- * MainActiviry진입
- * 근태여부 확인가능
- * 로그인이 풀려있을 시 자동으로 체크하여 LoginActivity로 이동
- * 2021/11/07 : 신규생성
- * */
 
 /*
 * 데이터베이스 이름 : guentae
 *
 * 테이블 이름 : Employee
 * empNum VARCHAR(PK), name VARCHAR, phone VARCHAR
+* 컬럼추가 : CompanySeq int(FK), EmpType INT
 *
 * 테이블 이름 : EmployeeInOut
 * empNum VARCHAR(PK), seq int(FK, 자동 증가), Intime varchar(20), Outtime varchar(20)
+* seq를 pk로 변경하기.
+*
+* 테이블 추가 생성 필요 : Company
+* CompanySeq int(자동증가, PK), CompanyName VARCHAR, Latitude VARCHAR, Longitude VARCHAR
 * * */
+
+// 35.0619024, 128.0768098
+// 좌표값 오차범위 : +- 0.0004000
 
 package com.example.checkinandout;
 
@@ -23,6 +25,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -51,6 +56,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -66,6 +73,12 @@ public class MainActivity extends AppCompatActivity {
     public String str_inEmpNum;
     public String str_inName;
     public String str_userType;
+    public String str_provider;
+    public Double dbl_longitude;
+    public Double dbl_latitude;
+    Location location;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,11 +88,32 @@ public class MainActivity extends AppCompatActivity {
         /*
         * 로그인 실패 시 다이어로그 창 무한으로 나오게 구현
         * */
+        checkSelfPermission();
 
-        if(int_loginSuccess == 0){
+
+        // DB 연결
+        /*if(int_loginSuccess == 0){
             showLoginDialog();
-        }
+        }*/
 
+        final LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        //location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        //str_provider = location.getProvider();
+        //dbl_latitude =location.getLatitude();
+        //dbl_longitude = location.getLongitude();
+        //System.out.println("초기호출 latitude : " + dbl_latitude);
+        //System.out.println("초기호출 longitude : " + dbl_longitude);
+
+        int int_locationCount = 0 ;
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                10000, //10초마다 업데이트, minTime과 minDistance는 and 조건 만족 시 실행
+                0,
+                gpsLocationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                10000,
+                0,
+                gpsLocationListener);
 
 
         /*
@@ -181,11 +215,24 @@ public class MainActivity extends AppCompatActivity {
                         System.out.println("로그인성공");
                         int_loginSuccess = 1;
 
+
+
+
+                        //if 좌표값 오차범위 내 일경우
                         /*
-                        * GPS 위치를 사용한 통신 구현
-                        * */
+                        long now = System.currentTimeMillis();
+                        Date mDate = new Date(now);
+                        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        String getTime = simpleDate.format(mDate);
+                        System.out.println("현재시간 : "+getTime);
+                        */
+
+
                         //InsertData insertTask = new InsertData();
                         //insertTask.execute(str_empNum, "2021-11-20 07:00:00", "2021-11-20 16:30:00");
+
+
+
                     }
                     else{
                         Toast.makeText(getApplicationContext(), "로그인 실패", Toast.LENGTH_SHORT).show();
@@ -301,5 +348,30 @@ public class MainActivity extends AppCompatActivity {
         else
             Toast.makeText(this, "권한 허용 완료", Toast.LENGTH_SHORT).show();
     }
+
+    final LocationListener gpsLocationListener = new LocationListener() {
+        public void onLocationChanged(Location location) {
+
+            String provider = location.getProvider();
+            dbl_longitude = location.getLongitude();
+            dbl_latitude = location.getLatitude();
+            double altitude = location.getAltitude();
+
+
+            System.out.println("측정 후 시간 변환에 따른 갱신");
+            System.out.println("latitude : " + dbl_latitude);
+            System.out.println("longitude : " + dbl_longitude);
+            // 현재시간과 정해진 시간을 비교로 특정 시간 범위에 들어가면 측정 값을 배열에 담음. 평균값을 계산 후 bool 변수를 초기화하여 다시 배열에 담기지 못하게 함
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+        public void onProviderEnabled(String provider) {
+        }
+
+        public void onProviderDisabled(String provider) {
+        }
+    };
 
 }
