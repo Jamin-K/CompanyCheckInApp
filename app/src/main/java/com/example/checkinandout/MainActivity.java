@@ -8,7 +8,7 @@
 *
 * 테이블 이름 : EmployeeInOut
 * empNum VARCHAR(PK), seq int(FK, 자동 증가), Intime varchar(20), Outtime varchar(20)
-* seq를 pk로 변경하기.
+* seq를 pk로 변경하기, Date(nchar 8) 추가
 *
 * 테이블 추가 생성 필요 : Company
 * CompanySeq int(자동증가, PK), CompanyName VARCHAR, Latitude VARCHAR, Longitude VARCHAR
@@ -73,9 +73,10 @@ public class MainActivity extends AppCompatActivity {
     public String str_inEmpNum;
     public String str_inName;
     public String str_userType;
-    public String str_provider;
     public Double dbl_longitude;
     public Double dbl_latitude;
+    public Double[] arr_longitude = new Double[5];
+    public Double[] arr_latitude = new Double[5];
     Location location;
 
 
@@ -96,16 +97,10 @@ public class MainActivity extends AppCompatActivity {
             showLoginDialog();
         }*/
 
-        final LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-        //location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        //str_provider = location.getProvider();
-        //dbl_latitude =location.getLatitude();
-        //dbl_longitude = location.getLongitude();
-        //System.out.println("초기호출 latitude : " + dbl_latitude);
-        //System.out.println("초기호출 longitude : " + dbl_longitude);
 
         int int_locationCount = 0 ;
-
+        /*출근시간에 따른 위치 계신*/
+        final LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                 10000, //10초마다 업데이트, minTime과 minDistance는 and 조건 만족 시 실행
                 0,
@@ -116,24 +111,15 @@ public class MainActivity extends AppCompatActivity {
                 gpsLocationListener);
 
 
+
         /*
          * 관리자 버튼 클릭 시 권한 검사 후 권리자 페이지 이동
          * */
         findViewById(R.id.btn_moveToAdmin).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if(int_adminCode == 1){
-                    //move to admin activity
                     Intent intent = new Intent(getApplicationContext(), AdminActivirty.class);
                     startActivity(intent);
-                }
-                else{
-                    //show dialog alert
-                    AlertDialog.Builder dlg = new AlertDialog.Builder(MainActivity.this);
-                    dlg.setTitle("경고");
-                    dlg.setMessage("권한이 없습니다");
-                }
 
             }
         });
@@ -165,6 +151,10 @@ public class MainActivity extends AppCompatActivity {
 
 
     public class GetData extends AsyncTask<String, Void, String>{
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
 
         ProgressDialog progressDialog;
         String errorString = null;
@@ -214,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "로그인 성공", Toast.LENGTH_SHORT).show();
                         System.out.println("로그인성공");
                         int_loginSuccess = 1;
+                        // if를 통해 유저 type을 판독하여 관리자페이지 진입 여부 활성화
 
 
 
@@ -226,6 +217,7 @@ public class MainActivity extends AppCompatActivity {
                         String getTime = simpleDate.format(mDate);
                         System.out.println("현재시간 : "+getTime);
                         */
+
 
 
                         //InsertData insertTask = new InsertData();
